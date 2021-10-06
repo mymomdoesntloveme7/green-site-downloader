@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,6 +13,30 @@ namespace Sites
     {
         static string exeasm = Assembly.GetExecutingAssembly().Location;
         static string dName = Path.GetDirectoryName(exeasm);
+
+        static bool isImage(string ext)
+        {
+            if (ext == ".jpeg" || ext == ".png" || ext == ".jfif" || ext == ".bmp" || ext == ".gif" || ext == ".jpg" || ext == ".tiff")
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        static bool isVideo(string ext)
+        {
+            if (ext == ".mp4" || ext == ".mpeg" || ext == ".mov" || ext == ".wmv")
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
         public static void DownloadPost(string id, bool askForConfirm)
         {
@@ -30,6 +54,9 @@ namespace Sites
 
                 string page = $"https://rule34.xxx/index.php?page=post&s=view&id={id}";
                 string html = GetPageHtml(page);
+
+                string imgRoot = dName + "\\images";
+                string vidRoot = dName + "\\videos";
 
                 string[] fssplit = fileserver.Split(new[] { "r\n", "\r", "\n" }, StringSplitOptions.None);
 
@@ -75,22 +102,96 @@ namespace Sites
 
                         if (k == ConsoleKey.Y)
                         {
-                            string rawP = $"\\img-{id}";
-                            string name = dName + rawP + ext;
 
-                            client.DownloadFile(imageUrl, name);
+                            if (isImage(ext))
+                            {
+                                string rawP = $"\\img-{id}";
+                                string name = imgRoot + rawP + ext;
 
-                            Console.WriteLine($"     -> downloaded img-{id}{ext}");
+                                if (!Directory.Exists(imgRoot))
+                                {
+                                    Directory.CreateDirectory(imgRoot);
+
+                                    client.DownloadFile(imageUrl, name);
+
+                                    Console.WriteLine($"     -> downloaded img-{id}{ext}");
+                                }
+                                else
+                                {
+
+                                    client.DownloadFile(imageUrl, name);
+
+                                    Console.WriteLine($"     -> downloaded img-{id}{ext}");
+                                }
+                            }
+                            else if (isVideo(ext))
+                            {
+                                string rawP = $"\\img-{id}";
+                                string name = vidRoot + rawP + ext;
+
+                                if (!Directory.Exists(vidRoot))
+                                {
+                                    Directory.CreateDirectory(vidRoot);
+                                    client.DownloadFile(imageUrl, name);
+
+                                    Console.WriteLine($"     -> downloaded img-{id}{ext}");
+                                }
+                                else
+                                {
+                                    client.DownloadFile(imageUrl, name);
+                                    Console.WriteLine($"     -> downloaded img-{id}{ext}");
+                                }
+                            }
                         }
                     }
                     else
                     {
-                        string rawP = $"\\img-{id}";
-                        string name = dName + rawP + ext;
+                        if (isImage(ext))
+                        {
+                            if (!Directory.Exists(imgRoot))
+                            {
+                                Directory.CreateDirectory(imgRoot);
 
-                        client.DownloadFile(imageUrl, name);
+                                string rawP = $"\\img-{id}";
+                                string name = imgRoot + rawP + ext;
 
-                        Console.WriteLine($"     -> downloaded img-{id}{ext}");
+                                client.DownloadFile(imageUrl, name);
+
+                                Console.WriteLine($"     -> downloaded img-{id}{ext}");
+                            }
+                            else
+                            {
+                                string rawP = $"\\img-{id}";
+                                string name = imgRoot + rawP + ext;
+
+                                client.DownloadFile(imageUrl, name);
+
+                                Console.WriteLine($"     -> downloaded img-{id}{ext}");
+                            }
+                        }
+                        else if (isVideo(ext))
+                        {
+                            if (!Directory.Exists(vidRoot))
+                            {
+                                Directory.CreateDirectory(vidRoot);
+
+                                string rawP = $"\\img-{id}";
+                                string name = vidRoot + rawP + ext;
+
+                                client.DownloadFile(imageUrl, name);
+
+                                Console.WriteLine($"     -> downloaded img-{id}{ext}");
+                            }
+                            else
+                            {
+                                string rawP = $"\\img-{id}";
+                                string name = vidRoot + rawP + ext;
+
+                                client.DownloadFile(imageUrl, name);
+
+                                Console.WriteLine($"     -> downloaded img-{id}{ext}");
+                            }
+                        }
                     }
                 }
 
