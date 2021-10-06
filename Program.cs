@@ -1,16 +1,11 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
-using System.Drawing.Imaging;
-using System.Drawing;
-using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Diagnostics;
 using Sites;
-using System.Collections.Generic;
 using System.Threading;
 using Filesystem;
 
@@ -23,6 +18,9 @@ namespace ImageDownloaderThing
         static string dName = Path.GetDirectoryName(exeasm);
 
         static int postAmt = 4565374;
+        static bool extraCmdEnable = false;
+
+        static string verString = "gsd version 1.0.9 created and developed by awesomedog261, resources from rule34.xxx";
 
         static void DownloadGui()
         {
@@ -121,6 +119,40 @@ namespace ImageDownloaderThing
 
                         break;
 
+                    case "set":
+                        int len = e.Length;
+
+                        string b = extraCmdEnable.ToString().ToLower();
+                        string values = $"set extracmdenabled={b} {Environment.NewLine}set randomcap={postAmt}";
+
+                        if(len > 1 && len < 3)
+                        {
+                            string fart = e[1];
+                            if (fart != "")
+                            {
+                                string[] valS = fart.Split('=');
+
+                                string otherV = valS[1];
+
+                                switch (valS[0])
+                                {
+                                    case "extracmdenabled":
+                                        extraCmdEnable = Convert.ToBoolean(otherV);
+                                        break;
+                                    case "randomcap":
+                                        postAmt = int.Parse(otherV);
+                                        break;
+                                }
+                            }
+                                
+                        }
+                        else
+                        {
+                            Console.WriteLine(values);
+                        }
+
+                        break;
+
                     case "dump" when e.Length == 2:
 
                         Console.WriteLine($"     -> beginning dump");
@@ -179,7 +211,7 @@ namespace ImageDownloaderThing
                         Console.WriteLine("[welcome]");
 
                         break;
-                    case "openimg" when e.Length >= 2:
+                    case "openimg" when e.Length >= 2 && extraCmdEnable:
                         string name = dName + "\\dgui.exe";
                         if (File.Exists(name))
                         {
@@ -209,12 +241,9 @@ namespace ImageDownloaderThing
                         }
                         break;
                     case "zall":
-                        DirectoryInfo inf = new DirectoryInfo(dName);
-                        foreach(FileInfo f in inf.GetFiles())
+                        foreach(string path in Directory.GetFiles(dName, "*.*", SearchOption.AllDirectories))
                         {
-                            string path = f.FullName;
-                            string n = f.Name;
-                            if (n.Contains("img-"))
+                            if (path.Contains("img-"))
                             {
                                 try
                                 {
@@ -228,29 +257,20 @@ namespace ImageDownloaderThing
 
                                     File.Delete(path);
 
-                                    Console.WriteLine($"zeroed {f.Name}");
-
                                 }
                                 catch (Exception ex)
                                 {
                                     Console.WriteLine($"ex -> {ex.Message}");
                                 }
                             }
-                            else
-                            {
-                                Console.WriteLine($"cannot zero");
-                            }
                         }
+                        Console.WriteLine($"zeroing complete");
                         break;
 
-                    case "eall":
-                        DirectoryInfo info = new DirectoryInfo(dName);
-                        foreach(FileInfo file in info.GetFiles())
+                    case "eall" when extraCmdEnable:
+                        foreach(string path in Directory.GetFiles(dName, "*.*", SearchOption.AllDirectories))
                         {
-                            string path = file.FullName;
-                            string nm = file.Name;
-
-                            if (nm.Contains("img-"))
+                            if (path.Contains("img-"))
                             {
                                 try
                                 {
@@ -263,18 +283,14 @@ namespace ImageDownloaderThing
                             }
                         }
                         break;
-                    case "dall":
-                        DirectoryInfo info2 = new DirectoryInfo(dName);
-                        foreach (FileInfo file in info2.GetFiles())
+                    case "dall" when extraCmdEnable:
+                        foreach (string path in Directory.GetFiles(dName, "*.*", SearchOption.AllDirectories))
                         {
-                            string path = file.FullName;
-                            string nm = file.Name;
-
-                            if (nm.Contains("img-"))
+                            if (path.Contains("img-"))
                             {
                                 try
                                 {
-                                    Encryption.Deencrypt(path);
+                                    Encryption.Decrypt(path);
                                 }
                                 catch (Exception ex)
                                 {
@@ -283,11 +299,40 @@ namespace ImageDownloaderThing
                             }
                         }
                         break;
+                    case "ver":
+                        Console.WriteLine(verString);
+
+                        ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3;
+                        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+
+                        ServicePointManager.ServerCertificateValidationCallback = delegate (object s, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) { return true; };
+
+                        using (WebClient client = new WebClient())
+                        {
+                            string latver = client.DownloadString("https://pastebin.com/raw/gfs6Ybtg");
+
+                            if (verString.Contains(latver))
+                            {
+                                Console.WriteLine("this version is up-to-date");
+                            }
+                            else
+                            {
+                                Console.WriteLine("this version is not up-to-date");
+                            }
+                        }
+                        break;
                     case "exit":
                         Environment.Exit(0);
                         break;
                     default:
-                        Console.WriteLine($"usage: dl '-r '(random) 'times' (times to run (if -r) ) 'id' -- download a post {Environment.NewLine} usage: get 'package' -- downloads a package and places it on your pc. {Environment.NewLine}  usage: cls -- clears console {Environment.NewLine}   usage: openimg 'id' -- opens dgui with image without saving it {Environment.NewLine}    usage: zall -- a safe way of deleting downloaded files {Environment.NewLine}     usage: eall -- encrypt all (experimental) {Environment.NewLine}      usage: dall -- unencrypt all (experimental) {Environment.NewLine}");
+                        if (extraCmdEnable)
+                        {
+                            Console.WriteLine($"usage: dl '-r '(random) 'times' (times to run (if -r) ) 'id' -- download a post {Environment.NewLine}  usage: dump 'amount' {Environment.NewLine}   usage: get 'package' -- downloads a package and places it on your pc. {Environment.NewLine}  usage: cls -- clears console {Environment.NewLine}   usage: openimg 'id' -- opens dgui with image without saving it {Environment.NewLine}    usage: zall -- a safe way of deleting downloaded files {Environment.NewLine}     usage: eall -- encrypt all (experimental) {Environment.NewLine}      usage: dall -- unencrypt all (experimental) {Environment.NewLine}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"usage: dl '-r '(random) 'times' (times to run (if -r) ) 'id' -- download a post {Environment.NewLine}  usage: dump 'amount' {Environment.NewLine}   usage: get 'package' -- downloads a package and places it on your pc. {Environment.NewLine}  usage: cls -- clears console {Environment.NewLine}    usage: zall -- a safe way of deleting downloaded files {Environment.NewLine}");
+                        }
                         break;
                 }
             }
